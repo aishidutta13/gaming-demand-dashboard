@@ -1,15 +1,43 @@
-
+```md
 # Arenix: AI Realtime Gaming Analytics
 
-Arenix is a Flask-based machine learning dashboard that forecasts Steam game demand using historical player activity, model evaluation, and live Steam API context.
+Arenix is a Flask-based machine learning dashboard for forecasting Steam game demand using historical player activity, model evaluation, live Steam API context, and interactive dashboard views.
 
-The project is built as an end-to-end analytics product: it includes data processing, model training, prediction APIs, an interactive dashboard, game comparison views, deployment configuration, and regression tests.
+The project is built as an end-to-end analytics product with data processing, model training, prediction APIs, dashboard pages, game comparison views, deployment configuration, and regression tests.
 
-## Screenshots
+## Live Demo
 
-![Gaming Demand Dashboard](gaming_dashboard_updated.png)
+Not deployed yet. The project currently runs locally as a Flask application.
 
-![ML Evaluation Dashboard](ml_evaluation_dashboard.png)
+## Preview
+
+### Application Screens
+
+| Home Page | Trend Board |
+|---|---|
+| ![Home Page](Website_screenshots/arenix_screenshot_01.png) | ![Trend Board](Website_screenshots/arenix_screenshot_02.png) |
+
+| Forecast Result | Prediction Details |
+|---|---|
+| ![Forecast Result](Website_screenshots/arenix_screenshot_03.png) | ![Prediction Details](Website_screenshots/arenix_screenshot_04.png) |
+
+| Demand Rankings | Compare Games |
+|---|---|
+| ![Demand Rankings](Website_screenshots/arenix_screenshot_05.png) | ![Compare Games](Website_screenshots/arenix_screenshot_06.png) |
+
+| Comparison Chart | Insights View |
+|---|---|
+| ![Comparison Chart](Website_screenshots/arenix_screenshot_07.png) | ![Insights View](Website_screenshots/arenix_screenshot_08.png) |
+
+| Full Analytics View |
+|---|
+| ![Full Analytics View](Website_screenshots/arenix_screenshot_09.png) |
+
+### Model and Dashboard Artifacts
+
+| Gaming Dashboard Preview | ML Evaluation Dashboard |
+|---|---|
+| ![Gaming Dashboard Preview](gaming_dashboard_updated.png) | ![ML Evaluation Dashboard](ml_evaluation_dashboard.png) |
 
 ## Project Highlights
 
@@ -19,7 +47,7 @@ The project is built as an end-to-end analytics product: it includes data proces
 - Selects the best model using time-based validation.
 - Displays live Steam player counts when available.
 - Includes demand levels, trend labels, server risk, opportunity score, and business recommendations.
-- Provides dashboard, search, leaderboard, and game comparison views.
+- Provides home, dashboard, search, leaderboard, details, and game comparison views.
 - Handles unsupported games with clear error responses.
 - Includes deployment files for Render/Gunicorn.
 - Includes pytest-based regression tests.
@@ -70,13 +98,17 @@ The app predicts the next-period player count for supported games and returns pr
 
 The app uses the Steam API to show live player counts when available. If the live API fails or is unavailable, the app falls back to the latest historical player count.
 
-### Dashboard
+### Trend Board Dashboard
 
-The dashboard shows tracked games, top forecast, high-demand games, game rankings, demand filters, and selected game details.
+The dashboard shows tracked games, top forecast, high-demand games, game rankings, demand filters, selected game details, and operational recommendations.
 
 ### Game Comparison
 
 The comparison page allows multiple games to be compared using historical data and forecasted demand.
+
+### Model Evaluation
+
+The project includes model validation, candidate comparison, selected-model reporting, and saved training metadata.
 
 ### Daily Retraining Pipeline
 
@@ -116,6 +148,7 @@ requirements.txt               Python dependencies
 Procfile                       Deployment process file
 render.yaml                    Render deployment configuration
 runtime.txt                    Python runtime version
+Website_screenshots/           Application screenshots
 ```
 
 ## Setup
@@ -194,7 +227,7 @@ python run_daily_pipeline.py --skip-collect
 
 ```text
 /                         Home page
-/dashboard                Dashboard page
+/dashboard                Trend board dashboard
 /compare                  Game comparison page
 /predict/<game>           Prediction API for a game
 /dashboard-data           Dashboard ranking data
@@ -210,6 +243,8 @@ python run_daily_pipeline.py --skip-collect
 - Server capacity planning
 - Promotion opportunity analysis
 - ML model evaluation practice
+- Dashboard development practice
+- End-to-end analytics product building
 
 ## Current Limitations
 
@@ -218,6 +253,7 @@ python run_daily_pipeline.py --skip-collect
 - Live Steam player counts are used as context, not as the original historical training target.
 - Steam API calls may fail or be rate-limited.
 - Unsupported games return an error instead of fabricated predictions.
+- The app is not deployed publicly yet.
 
 ## Future Improvements
 
@@ -227,6 +263,7 @@ python run_daily_pipeline.py --skip-collect
 - Add downloadable reports.
 - Improve frontend responsiveness.
 - Add more advanced time-series models.
+- Add CI testing with GitHub Actions.
 
 ## Author
 

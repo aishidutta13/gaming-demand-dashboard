@@ -1,0 +1,989 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;800;900&display=swap" rel="stylesheet">
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Arenix | Gaming Demand Forecast</title>
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+<main class="container">
+    <section class="hero-section dashboard-hero">
+        <img id="heroBgImage" class="hero-bg" alt="">
+        <div class="hero-overlay"></div>
+
+        <header class="hero-topbar">
+            <div class="logo-section brand-text-only">
+    <div>
+        <h1>Arenix</h1>
+        <span>Gaming Demand Intelligence</span>
+    </div>
+</div>
+
+
+            <nav class="hero-nav" aria-label="Main navigation">
+                <a href="/" class="home-icon-btn" aria-label="Home">
+                    <i class="fa-solid fa-house"></i>
+                </a>
+
+                <a href="/dashboard" class="no-underline">
+                    <button class="nav-btn active-nav" type="button">Trend Board</button>
+                </a>
+
+                <a href="/compare" class="no-underline">
+                    <button class="nav-btn" type="button">Compare</button>
+                </a>
+            </nav>
+
+            <div class="search-box dashboard-header-search">
+                <input
+                    type="text"
+                    id="game"
+                    placeholder="Search games, e.g. rust, apex, csgo"
+                    onkeydown="handleSearchEnter(event)"
+                >
+
+                <button type="button" onclick="predict()">
+                    <i class="fa-solid fa-magnifying-glass-chart"></i>
+                    Predict Demand
+                </button>
+            </div>
+        </header>
+    </section>
+
+    <section id="resultCard" class="result-card">
+        <div class="selected-game-showcase">
+            <img id="selectedGameImage" alt="">
+            <div class="selected-game-overlay"></div>
+            <div class="selected-game-copy">
+                <span>Selected Game</span>
+                <h2 id="selectedGameTitle">Choose a Game</h2>
+                <p>Live demand signal, forecast strength, and operational insight.</p>
+            </div>
+        </div>
+
+        <div class="result-grid">
+            <div class="metric">
+                <h3>Matched Game</h3>
+                <p id="matchedGame" class="blue">-</p>
+            </div>
+
+            <div class="metric">
+                <h3>Current Players</h3>
+                <p id="livePlayers" class="blue">-</p>
+            </div>
+
+            <div class="metric">
+                <h3>Predicted Players</h3>
+                <p id="predictedPlayers" class="pink">-</p>
+            </div>
+
+            <div class="metric">
+                <h3>Demand Level</h3>
+                <p id="demandLevel">-</p>
+            </div>
+        </div>
+
+        <div class="intelligence-grid">
+            <div class="intel-tile">
+                <span>Trend</span>
+                <strong id="trendLabel">-</strong>
+            </div>
+
+            <div class="intel-tile">
+                <span>Confidence</span>
+                <strong id="forecastConfidence">-</strong>
+            </div>
+
+            <div class="intel-tile">
+                <span>Server Risk</span>
+                <strong id="serverRiskScore">-</strong>
+            </div>
+
+            <div class="intel-tile">
+                <span>Opportunity</span>
+                <strong id="opportunityScore">-</strong>
+            </div>
+
+            <div class="intel-tile">
+                <span>Forecast Date</span>
+                <strong id="forecastDate">-</strong>
+            </div>
+
+            <div class="intel-tile">
+                <span>Model</span>
+                <strong id="modelSource">-</strong>
+            </div>
+        </div>
+
+        <div class="result-actions">
+            <div class="recommendation" id="recommendation"></div>
+
+            <button class="details-btn" type="button" onclick="openPredictionDetails()">
+                <i class="fa-solid fa-chart-simple"></i>
+                Open Details
+            </button>
+        </div>
+    </section>
+
+    <section class="dashboard-overview" aria-label="Demand overview">
+        <article class="overview-card">
+            <div class="overview-icon blue-icon">
+                <i class="fa-solid fa-gamepad"></i>
+            </div>
+            <div>
+                <span>Tracked Games</span>
+                <strong id="overviewTotalGames">-</strong>
+            </div>
+        </article>
+
+        <article class="overview-card">
+            <div class="overview-icon pink-icon">
+                <i class="fa-solid fa-trophy"></i>
+            </div>
+            <div>
+                <span>Top Forecast</span>
+                <strong id="overviewTopForecast">-</strong>
+            </div>
+        </article>
+
+        <article class="overview-card">
+            <div class="overview-icon green-icon">
+                <i class="fa-solid fa-arrow-trend-up"></i>
+            </div>
+            <div>
+                <span>High Demand</span>
+                <strong id="overviewHighDemand">-</strong>
+            </div>
+        </article>
+
+        <article class="overview-card">
+            <div class="overview-icon purple-icon">
+                <i class="fa-solid fa-calendar-days"></i>
+            </div>
+            <div>
+                <span>Forecast Window</span>
+                <strong id="overviewForecastWindow">Next Month</strong>
+            </div>
+        </article>
+    </section>
+
+    <section class="movers-panel" aria-label="Top movers">
+        <article class="mover-card">
+            <span>Biggest Growth</span>
+            <strong id="moverGrowth">-</strong>
+            <small id="moverGrowthValue">-</small>
+        </article>
+
+        <article class="mover-card">
+            <span>Biggest Drop</span>
+            <strong id="moverDrop">-</strong>
+            <small id="moverDropValue">-</small>
+        </article>
+
+        <article class="mover-card">
+            <span>Highest Server Risk</span>
+            <strong id="moverRisk">-</strong>
+            <small id="moverRiskValue">-</small>
+        </article>
+
+        <article class="mover-card">
+            <span>Best Promotion Target</span>
+            <strong id="moverOpportunity">-</strong>
+            <small id="moverOpportunityValue">-</small>
+        </article>
+    </section>
+
+    <section class="trending-panel dashboard-top-panel">
+        <div class="trending-head panel-head-split">
+            <div>
+                <h2><i class="fa-solid fa-ranking-star"></i> Game Demand Rankings</h2>
+                <p>Browse tracked games by forecast strength and demand signal</p>
+            </div>
+
+            <div class="top-panel-tools">
+                <span id="topGameCount" class="game-count-badge">Loading</span>
+            </div>
+        </div>
+
+        <div class="ranking-filter-dock">
+            <div class="filter-group" aria-label="Demand filters">
+                <span>Demand</span>
+                <div class="demand-filter-bar">
+                    <button class="filter-chip active-filter" type="button" data-demand-filter="All" onclick="setDemandFilter('All')">
+                        All
+                    </button>
+                    <button class="filter-chip" type="button" data-demand-filter="High" onclick="setDemandFilter('High')">
+                        High
+                    </button>
+                    <button class="filter-chip" type="button" data-demand-filter="Medium" onclick="setDemandFilter('Medium')">
+                        Medium
+                    </button>
+                    <button class="filter-chip" type="button" data-demand-filter="Low" onclick="setDemandFilter('Low')">
+                        Low
+                    </button>
+                </div>
+            </div>
+
+            <label class="category-select-wrap" for="categoryFilters">
+                <span>Category</span>
+                <select id="categoryFilters" onchange="setCategoryFilter(this.value)"></select>
+            </label>
+        </div>
+
+
+        <div class="ranking-list" id="cardsContainer"></div>
+    </section>
+</main>
+
+<div id="gameModal" class="modal">
+    <div class="modal-content">
+        <button class="close" type="button" onclick="closeModal()" aria-label="Close modal">&times;</button>
+
+        <h2 id="modalGame" class="modal-title"></h2>
+
+        <div class="result-grid">
+            <div class="metric">
+                <h3>Current Players</h3>
+                <p id="modalLive" class="blue"></p>
+            </div>
+
+            <div class="metric">
+                <h3>Predicted Players</h3>
+                <p id="modalPredicted" class="pink"></p>
+            </div>
+
+            <div class="metric">
+                <h3>Demand</h3>
+                <p id="modalDemand"></p>
+            </div>
+
+            <div class="metric">
+                <h3>Recommendation</h3>
+                <p id="modalReco" class="modal-reco"></p>
+            </div>
+        </div>
+
+        <div class="modal-chart-grid">
+            <div class="chart-box">
+                <h3>Player Trend</h3>
+                <canvas id="playerTrendChart" class="detail-chart"></canvas>
+            </div>
+
+            <div class="chart-box">
+                <h3>Viewer Trend</h3>
+                <canvas id="viewerTrendChart" class="detail-chart"></canvas>
+            </div>
+
+            <div class="chart-box">
+                <h3>Live vs Predicted</h3>
+                <canvas id="barChart" class="detail-chart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let playerTrendChart;
+let viewerTrendChart;
+let barChart;
+let latestPredictionGame = null;
+let dashboardGames = [];
+let activeDemandFilter = "All";
+let activeCategoryFilter = "All";
+
+const gameImages = {
+    "Dota 2": "https://cdn.cloudflare.steamstatic.com/steam/apps/570/header.jpg",
+    "CSGO": "https://cdn.cloudflare.steamstatic.com/steam/apps/730/header.jpg",
+    "Counter Strike: Global Offensive": "https://cdn.cloudflare.steamstatic.com/steam/apps/730/header.jpg",
+    "PUBG": "https://cdn.cloudflare.steamstatic.com/steam/apps/578080/header.jpg",
+    "PUBG: Battlegrounds": "https://cdn.cloudflare.steamstatic.com/steam/apps/578080/header.jpg",
+    "Apex Legends": "https://cdn.cloudflare.steamstatic.com/steam/apps/1172470/header.jpg",
+    "GTA V": "https://cdn.cloudflare.steamstatic.com/steam/apps/271590/header.jpg",
+    "Grand Theft Auto V": "https://cdn.cloudflare.steamstatic.com/steam/apps/271590/header.jpg",
+    "Destiny 2": "https://cdn.cloudflare.steamstatic.com/steam/apps/1085660/header.jpg"
+};
+
+const gameGenres = {
+    "Dota 2": "MOBA • Strategy • Competitive • Multiplayer",
+    "Counter Strike: Global Offensive": "FPS • Tactical • Esports • Multiplayer",
+    "PUBG: Battlegrounds": "Battle Royale • Survival • Shooter • Multiplayer",
+    "Apex Legends": "Battle Royale • Hero Shooter • Fast-Paced",
+    "Grand Theft Auto V": "Open World • Action • RP Community",
+    "Destiny 2": "Sci-Fi Shooter • Seasonal Peaks • Multiplayer"
+};
+
+function handleSearchEnter(event) {
+    if (event.key === "Enter") predict();
+}
+
+function escapeHtml(value) {
+    return String(value ?? "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+}
+
+function formatGameName(name) {
+    const specialNames = {
+        "dota": "Dota 2",
+        "dota2": "Dota 2",
+        "dota 2": "Dota 2",
+        "cs": "CSGO",
+        "csgo": "CSGO",
+        "cs2": "CSGO",
+        "counter strike": "Counter Strike: Global Offensive",
+        "counter strike global offensive": "Counter Strike: Global Offensive",
+        "counter strike: global offensive": "Counter Strike: Global Offensive",
+        "pubg": "PUBG",
+        "pubg battlegrounds": "PUBG: Battlegrounds",
+        "pubg: battlegrounds": "PUBG: Battlegrounds",
+        "apex": "Apex Legends",
+        "apex legends": "Apex Legends",
+        "gta": "GTA V",
+        "gta v": "GTA V",
+        "gta 5": "GTA V",
+        "grand theft auto v": "Grand Theft Auto V",
+        "destiny2": "Destiny 2",
+        "destiny 2": "Destiny 2"
+    };
+
+    const normalized = String(name || "").toLowerCase().trim();
+
+    if (specialNames[normalized]) {
+        return specialNames[normalized];
+    }
+
+    return normalized
+        .split(" ")
+        .filter(Boolean)
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(" ");
+}
+
+function getGameInitials(name) {
+    return String(name || "Game")
+        .split(" ")
+        .filter(Boolean)
+        .slice(0, 2)
+        .map(word => word.charAt(0).toUpperCase())
+        .join("");
+}
+
+function hashString(value) {
+    let hash = 0;
+    const text = String(value || "game");
+
+    for (let i = 0; i < text.length; i++) {
+        hash = text.charCodeAt(i) + ((hash << 5) - hash);
+    }
+
+    return Math.abs(hash);
+}
+
+function buildFallbackImage(name) {
+    const formattedName = formatGameName(name);
+    const initials = getGameInitials(formattedName);
+    const hash = hashString(formattedName);
+
+    const hueA = hash % 360;
+    const hueB = (hueA + 52) % 360;
+    const hueC = (hueA + 128) % 360;
+
+    const svg = `
+        <svg xmlns="http://www.w3.org/2000/svg" width="460" height="215" viewBox="0 0 460 215">
+            <defs>
+                <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+                    <stop offset="0%" stop-color="hsl(${hueA}, 56%, 28%)"/>
+                    <stop offset="55%" stop-color="hsl(${hueB}, 52%, 22%)"/>
+                    <stop offset="100%" stop-color="hsl(${hueC}, 58%, 24%)"/>
+                </linearGradient>
+            </defs>
+            <rect width="460" height="215" rx="24" fill="url(#bg)"/>
+            <path d="M-20 158 C78 98, 158 208, 246 132 S356 88, 492 48" fill="none" stroke="rgba(255,255,255,.20)" stroke-width="11"/>
+            <path d="M-28 178 C92 128, 154 226, 268 148 S378 116, 500 80" fill="none" stroke="rgba(255,255,255,.10)" stroke-width="7"/>
+            <path d="M330 -30 L502 96 L502 -30 Z" fill="rgba(255,255,255,.10)"/>
+            <path d="M-40 82 L144 236 L-40 236 Z" fill="rgba(0,0,0,.14)"/>
+            <text x="50%" y="53%" dominant-baseline="middle" text-anchor="middle"
+                font-family="Arial, sans-serif" font-size="64" font-weight="900"
+                fill="white" letter-spacing="3">${initials}</text>
+        </svg>
+    `;
+
+    return "data:image/svg+xml;charset=UTF-8," + encodeURIComponent(svg);
+}
+
+const defaultHeroImage = buildFallbackImage("Arenix");
+
+function getGameImage(game) {
+    if (typeof game === "object" && game !== null && game.image_url) {
+        return game.image_url;
+    }
+
+    const name = typeof game === "object" && game !== null
+        ? game.display_name || game.matched_game || game.game || game.name
+        : game;
+
+    const formattedName = formatGameName(name);
+    return gameImages[formattedName] || buildFallbackImage(formattedName);
+}
+
+function getGameGenre(name) {
+    const formattedName = formatGameName(name);
+    return gameGenres[formattedName] || "Gaming • Demand Forecast • Player Analytics";
+}
+
+function formatNumber(num) {
+    if (num === null || num === undefined) return "N/A";
+    return Number(num).toLocaleString();
+}
+
+function shortNumber(num) {
+    const value = Number(num || 0);
+    if (value >= 1000000) return (value / 1000000).toFixed(1) + "M";
+    if (value >= 1000) return Math.round(value / 1000) + "K";
+    return value.toString();
+}
+
+function demandClass(level) {
+    if (level === "High" || level === "High Load") return "pink";
+    if (level === "Low" || level === "Low Activity") return "blue";
+    return "medium";
+}
+
+function confidenceClass(level) {
+    if (level === "High") return "gain-positive";
+    if (level === "Low") return "gain-negative";
+    return "medium";
+}
+
+function scoreText(value) {
+    return `${Number(value || 0)}/100`;
+}
+
+function sourceLabel(source) {
+    if (!source) return "Unknown";
+    if (source.includes("xgboost")) return "XGBoost";
+    if (source.includes("xgb")) return "XGBoost";
+    if (source.includes("baseline")) return "Baseline";
+    if (source.includes("lag_1")) return "Lag Baseline";
+    return source;
+}
+
+function calculateGain(live, predicted) {
+    if (!live || live === 0) return 0;
+    return ((predicted - live) / live) * 100;
+}
+
+function gainClass(value) {
+    return value >= 0 ? "gain-positive" : "gain-negative";
+}
+
+function gainText(value) {
+    return value >= 0 ? "↑ +" + value.toFixed(1) + "%" : "↓ " + Math.abs(value).toFixed(1) + "%";
+}
+
+function chartColorByGain(gain) {
+    if (gain >= 0) {
+        return {
+            line: "#6ee76e",
+            fill: "rgba(110, 231, 110, 0.10)"
+        };
+    }
+
+    return {
+        line: "#ff5f5f",
+        fill: "rgba(255, 95, 95, 0.10)"
+    };
+}
+
+function updateHeroSection(game) {
+    const gameImage = getGameImage(game);
+    const gameName = formatGameName(game?.matched_game || game?.display_name || game?.game || game?.searched_game || "Select a Game");
+    const selectedImage = document.getElementById("selectedGameImage");
+    const selectedTitle = document.getElementById("selectedGameTitle");
+
+    document.getElementById("heroBgImage").src = gameImage || defaultHeroImage;
+
+    if (selectedImage) {
+        selectedImage.src = gameImage || defaultHeroImage;
+    }
+
+    if (selectedTitle) {
+        selectedTitle.innerText = gameName;
+    }
+}
+
+function updatePredictionSummary(data, fallbackGame) {
+    latestPredictionGame = data.searched_game || data.matched_game || fallbackGame;
+
+    document.getElementById("resultCard").style.display = "block";
+    document.getElementById("matchedGame").innerText = formatGameName(data.matched_game || fallbackGame);
+    document.getElementById("livePlayers").innerText = formatNumber(data.current_players);
+    document.getElementById("predictedPlayers").innerText = formatNumber(data.predicted_players);
+
+    const demandEl = document.getElementById("demandLevel");
+    demandEl.innerText = data.demand_level;
+    demandEl.className = demandClass(data.demand_level);
+
+    const trendEl = document.getElementById("trendLabel");
+    trendEl.innerText = data.trend_label || "-";
+    trendEl.className = gainClass(Number(data.gain_percent || 0));
+
+    const confidenceEl = document.getElementById("forecastConfidence");
+    confidenceEl.innerText = data.forecast_confidence || "-";
+    confidenceEl.className = confidenceClass(data.forecast_confidence);
+
+    document.getElementById("serverRiskScore").innerText = scoreText(data.server_risk_score);
+    document.getElementById("opportunityScore").innerText = scoreText(data.opportunity_score);
+    document.getElementById("forecastDate").innerText = data.forecast_date
+        ? formatShortDate(data.forecast_date)
+        : "-";
+    document.getElementById("modelSource").innerText = sourceLabel(data.model_source);
+
+    document.getElementById("recommendation").innerHTML =
+        `<span>${escapeHtml(data.prediction_explanation || "Recommendation")}</span><strong>${escapeHtml(data.business_action || data.recommendation)}</strong>`;
+
+    updateHeroSection(data);
+}
+
+function scrollToResultCard() {
+    const resultCard = document.getElementById("resultCard");
+
+    if (resultCard) {
+        resultCard.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+}
+
+async function predict() {
+    const game = document.getElementById("game").value.trim();
+
+    if (!game) {
+        alert("Please enter a game name");
+        return;
+    }
+
+    const response = await fetch(`/predict/${encodeURIComponent(game)}`);
+    const data = await response.json();
+
+    if (data.error) {
+        alert(data.error);
+        return;
+    }
+
+    updatePredictionSummary(data, game);
+    scrollToResultCard();
+}
+
+function openPredictionDetails() {
+    if (!latestPredictionGame) {
+        alert("Search a game first");
+        return;
+    }
+
+    showDetails(latestPredictionGame);
+}
+
+function formatShortDate(value) {
+    if (!value) return "Forecast";
+
+    return new Date(value).toLocaleDateString("en-US", {
+        month: "short",
+        year: "2-digit"
+    });
+}
+
+function playerTrendFromHistory(data) {
+    const history = Array.isArray(data.history) ? data.history : [];
+    const labels = history.map(row => formatShortDate(row.date));
+    const values = history.map(row => Number(row.players || 0));
+
+    labels.push("Forecast");
+    values.push(Number(data.predicted_players || 0));
+
+    return { labels, values };
+}
+
+function viewerTrendFromHistory(data) {
+    const history = Array.isArray(data.history) ? data.history : [];
+    const rows = history.filter(row => row.viewer_count !== null && row.viewer_count !== undefined);
+
+    return {
+        labels: rows.map(row => formatShortDate(row.date)),
+        values: rows.map(row => Number(row.viewer_count || 0))
+    };
+}
+
+function renderDashboardCards(games) {
+    const container = document.getElementById("cardsContainer");
+    const count = document.getElementById("topGameCount");
+
+    container.innerHTML = "";
+    count.innerText = `${games.length} games`;
+
+    if (games.length === 0) {
+        container.innerHTML = `<p class="empty-note">No matching games found.</p>`;
+        return;
+    }
+
+    games.forEach((game, index) => {
+        const gameName = game.display_name || game.matched_game || game.game;
+        const gameImage = getGameImage(game);
+        const gain = Number(game.gain_percent ?? calculateGain(game.current_players, game.predicted_players));
+        const card = document.createElement("article");
+
+        card.className = "ranking-row demand-card";
+        card.addEventListener("click", () => selectDashboardGame(game.searched_game || game.key || gameName));
+
+        card.innerHTML = `
+            <div class="rank-number">${index + 1}</div>
+            <img src="${gameImage}" class="ranking-thumb" alt="">
+            <div class="ranking-game">
+                <h3>${escapeHtml(formatGameName(gameName))}</h3>
+                <span>${escapeHtml(game.category || getGameGenre(gameName))}</span>
+            </div>
+            <div class="ranking-metric">
+                <small>Current</small>
+                <strong class="blue">${shortNumber(game.current_players)}</strong>
+            </div>
+            <div class="ranking-metric">
+                <small>Forecast</small>
+                <strong class="pink">${shortNumber(game.predicted_players)}</strong>
+            </div>
+            <div class="ranking-metric">
+                <small>Gain</small>
+                <strong class="${gainClass(gain)}">${gainText(gain)}</strong>
+            </div>
+            <div class="ranking-metric">
+                <small>Risk</small>
+                <strong class="${Number(game.server_risk_score || 0) >= 70 ? "gain-negative" : "blue"}">${scoreText(game.server_risk_score)}</strong>
+            </div>
+            <div class="ranking-action">
+                <span class="demand-pill ${demandClass(game.demand_level)}">${escapeHtml(game.demand_level)}</span>
+                <i class="fa-solid fa-chevron-right"></i>
+            </div>
+        `;
+
+        const image = card.querySelector("img");
+        image.onerror = () => {
+            image.onerror = null;
+            image.src = buildFallbackImage(gameName);
+        };
+
+        container.appendChild(card);
+    });
+}
+
+function getFilteredDashboardGames() {
+    return dashboardGames.filter(game => {
+        const matchesDemand = activeDemandFilter === "All" || game.demand_level === activeDemandFilter;
+        const matchesCategory = activeCategoryFilter === "All" || game.category === activeCategoryFilter;
+
+        return matchesDemand && matchesCategory;
+    });
+}
+
+function filterDashboardCards() {
+    renderDashboardCards(getFilteredDashboardGames());
+}
+
+function setDemandFilter(level) {
+    activeDemandFilter = level;
+
+    document.querySelectorAll("[data-demand-filter]").forEach(button => {
+        button.classList.toggle("active-filter", button.dataset.demandFilter === level);
+    });
+
+    filterDashboardCards();
+}
+
+function setCategoryFilter(category) {
+    activeCategoryFilter = category;
+
+    filterDashboardCards();
+}
+
+function renderCategoryFilters(games) {
+    const categories = ["All", ...new Set(games.map(game => game.category).filter(Boolean).sort())];
+    const container = document.getElementById("categoryFilters");
+
+    container.innerHTML = categories.map(category => `
+        <option value="${escapeHtml(category)}" ${category === activeCategoryFilter ? "selected" : ""}>
+            ${escapeHtml(category)}
+        </option>
+    `).join("");
+}
+
+function updateDashboardOverview(games) {
+    const total = games.length;
+    const topGame = games[0];
+    const highDemandCount = games.filter(game => game.demand_level === "High").length;
+    const latestForecast = games
+        .map(game => game.forecast_date)
+        .filter(Boolean)
+        .sort()
+        .at(-1);
+
+    document.getElementById("overviewTotalGames").innerText = total.toLocaleString();
+    document.getElementById("overviewTopForecast").innerText = topGame
+        ? shortNumber(topGame.predicted_players)
+        : "-";
+    document.getElementById("overviewHighDemand").innerText = highDemandCount.toLocaleString();
+    document.getElementById("overviewForecastWindow").innerText = latestForecast
+        ? formatShortDate(latestForecast)
+        : "Next Month";
+}
+
+function gameDisplayName(game) {
+    return formatGameName(game.display_name || game.matched_game || game.game || "Game");
+}
+
+function updateTopMovers(games) {
+    const byGrowth = [...games].sort((a, b) => Number(b.gain_percent || 0) - Number(a.gain_percent || 0))[0];
+    const byDrop = [...games].sort((a, b) => Number(a.gain_percent || 0) - Number(b.gain_percent || 0))[0];
+    const byRisk = [...games].sort((a, b) => Number(b.server_risk_score || 0) - Number(a.server_risk_score || 0))[0];
+    const byOpportunity = [...games].sort((a, b) => Number(b.opportunity_score || 0) - Number(a.opportunity_score || 0))[0];
+
+    document.getElementById("moverGrowth").innerText = byGrowth ? gameDisplayName(byGrowth) : "-";
+    document.getElementById("moverGrowthValue").innerText = byGrowth ? gainText(Number(byGrowth.gain_percent || 0)) : "-";
+    document.getElementById("moverDrop").innerText = byDrop ? gameDisplayName(byDrop) : "-";
+    document.getElementById("moverDropValue").innerText = byDrop ? gainText(Number(byDrop.gain_percent || 0)) : "-";
+    document.getElementById("moverRisk").innerText = byRisk ? gameDisplayName(byRisk) : "-";
+    document.getElementById("moverRiskValue").innerText = byRisk ? scoreText(byRisk.server_risk_score) : "-";
+    document.getElementById("moverOpportunity").innerText = byOpportunity ? gameDisplayName(byOpportunity) : "-";
+    document.getElementById("moverOpportunityValue").innerText = byOpportunity ? scoreText(byOpportunity.opportunity_score) : "-";
+}
+
+async function loadDashboardCards() {
+    try {
+        const response = await fetch("/dashboard-data");
+        const games = await response.json();
+
+        dashboardGames = games.sort((a, b) =>
+            Number(b.predicted_players || 0) - Number(a.predicted_players || 0)
+        );
+
+        if (dashboardGames.length > 0) {
+            updateHeroSection(dashboardGames[0]);
+        } else {
+            document.getElementById("heroBgImage").src = defaultHeroImage;
+        }
+
+        updateDashboardOverview(dashboardGames);
+        updateTopMovers(dashboardGames);
+        renderCategoryFilters(dashboardGames);
+        renderDashboardCards(dashboardGames);
+    } catch (error) {
+        console.error("Dashboard loading error:", error);
+        document.getElementById("cardsContainer").innerHTML =
+            `<p class="empty-note">Could not load dashboard games.</p>`;
+        document.getElementById("heroBgImage").src = defaultHeroImage;
+    }
+}
+
+async function showDetails(game) {
+    const response = await fetch(`/predict/${encodeURIComponent(game)}`);
+    const data = await response.json();
+
+    if (data.error) {
+        alert(data.error);
+        return;
+    }
+
+    document.getElementById("gameModal").style.display = "flex";
+    document.body.style.overflow = "hidden";
+
+    document.getElementById("modalGame").innerText = formatGameName(data.matched_game);
+    document.getElementById("modalLive").innerText = formatNumber(data.current_players);
+    document.getElementById("modalPredicted").innerText = formatNumber(data.predicted_players);
+
+    const demandEl = document.getElementById("modalDemand");
+    demandEl.innerText = data.demand_level;
+    demandEl.className = demandClass(data.demand_level);
+
+    document.getElementById("modalReco").innerText = data.recommendation;
+
+    updatePredictionSummary(data, game);
+
+    drawPlayerTrend(data);
+    drawViewerTrend(data);
+    drawBarChart(data);
+}
+
+async function selectDashboardGame(game) {
+    const response = await fetch(`/predict/${encodeURIComponent(game)}`);
+    const data = await response.json();
+
+    if (data.error) {
+        alert(data.error);
+        return;
+    }
+
+    updatePredictionSummary(data, game);
+    scrollToResultCard();
+}
+
+function closeModal() {
+    document.getElementById("gameModal").style.display = "none";
+    document.body.style.overflow = "auto";
+}
+
+document.getElementById("gameModal").addEventListener("click", function(event) {
+    if (event.target === this) closeModal();
+});
+
+function destroyChart(chart) {
+    if (chart) chart.destroy();
+}
+
+function drawPlayerTrend(data) {
+    destroyChart(playerTrendChart);
+
+    const gain = calculateGain(data.current_players, data.predicted_players);
+    const colors = chartColorByGain(gain);
+    const trend = playerTrendFromHistory(data);
+
+    playerTrendChart = new Chart(document.getElementById("playerTrendChart"), {
+        type: "line",
+        data: {
+            labels: trend.labels,
+            datasets: [{
+                label: "Players",
+                data: trend.values,
+                borderColor: colors.line,
+                backgroundColor: colors.fill,
+                borderWidth: 2,
+                pointRadius: 0,
+                pointHoverRadius: 6,
+                tension: 0.38,
+                fill: true
+            }]
+        },
+        options: chartOptions("Players", colors.line)
+    });
+}
+
+function drawViewerTrend(data) {
+    destroyChart(viewerTrendChart);
+
+    const gain = calculateGain(data.current_players, data.predicted_players);
+    const colors = chartColorByGain(gain);
+    const trend = viewerTrendFromHistory(data);
+
+    viewerTrendChart = new Chart(document.getElementById("viewerTrendChart"), {
+        type: "line",
+        data: {
+            labels: trend.labels,
+            datasets: [{
+                label: "Viewers",
+                data: trend.values,
+                borderColor: colors.line,
+                backgroundColor: colors.fill,
+                borderWidth: 2,
+                pointRadius: 3,
+                pointHoverRadius: 6,
+                tension: 0.4,
+                fill: true
+            }]
+        },
+        options: chartOptions("Viewers", colors.line)
+    });
+}
+
+function drawBarChart(data) {
+    destroyChart(barChart);
+
+    barChart = new Chart(document.getElementById("barChart"), {
+        type: "bar",
+        data: {
+            labels: ["Current", "Predicted"],
+            datasets: [{
+                label: "Players",
+                data: [data.current_players || 0, data.predicted_players],
+                backgroundColor: [
+                    "rgba(126, 200, 227, 0.55)",
+                    "rgba(244, 167, 185, 0.55)"
+                ],
+                borderColor: [
+                    "#7ec8e3",
+                    "#f4a7b9"
+                ],
+                borderWidth: 1.5,
+                borderRadius: 8
+            }]
+        },
+        options: chartOptions("Players", "#7ec8e3")
+    });
+}
+
+function chartOptions(label, accentColor = "#7ec8e3") {
+    return {
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: { mode: "index", intersect: false },
+        plugins: {
+            legend: {
+                labels: {
+                    color: "#ffffff",
+                    boxWidth: 14,
+                    boxHeight: 4,
+                    padding: 10,
+                    font: { size: 11 }
+                }
+            },
+            tooltip: {
+                backgroundColor: "rgba(10,15,25,0.95)",
+                borderColor: accentColor,
+                borderWidth: 1,
+                titleColor: "#ffffff",
+                bodyColor: "#ffffff",
+                padding: 10,
+                callbacks: {
+                    label: function(context) {
+                        return label + ": " + Math.round(context.raw).toLocaleString();
+                    }
+                }
+            }
+        },
+        scales: {
+            x: {
+                ticks: {
+                    color: "#b8b8b8",
+                    maxTicksLimit: 6
+                },
+                grid: {
+                    color: "rgba(255,255,255,0.04)"
+                }
+            },
+            y: {
+                ticks: {
+                    color: "#b8b8b8",
+                    callback: function(value) {
+                        return Number(value).toLocaleString();
+                    }
+                },
+                grid: {
+                    color: "rgba(255,255,255,0.04)"
+                }
+            }
+        }
+    };
+}
+
+document.getElementById("heroBgImage").src = defaultHeroImage;
+document.getElementById("selectedGameImage").src = defaultHeroImage;
+
+loadDashboardCards();
+</script>
+</body>
+</html>

@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;800;900&display=swap" rel="stylesheet">
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Arenix | Home</title>
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+<main class="container">
+    <section class="hero-section home-hero game-collage-hero">
+
+        <div class="game-collage-bg" aria-hidden="true">
+            <div class="game-row row-one">
+                <img src="https://cdn.cloudflare.steamstatic.com/steam/apps/570/header.jpg" alt="">
+                <img src="https://cdn.cloudflare.steamstatic.com/steam/apps/730/header.jpg" alt="">
+                <img src="https://cdn.cloudflare.steamstatic.com/steam/apps/578080/header.jpg" alt="">
+                <img src="https://cdn.cloudflare.steamstatic.com/steam/apps/1172470/header.jpg" alt="">
+                <img src="https://cdn.cloudflare.steamstatic.com/steam/apps/271590/header.jpg" alt="">
+                <img src="https://cdn.cloudflare.steamstatic.com/steam/apps/1085660/header.jpg" alt="">
+            </div>
+
+            <div class="game-row row-two">
+                <img src="https://cdn.cloudflare.steamstatic.com/steam/apps/252490/header.jpg" alt="">
+                <img src="https://cdn.cloudflare.steamstatic.com/steam/apps/440/header.jpg" alt="">
+                <img src="https://cdn.cloudflare.steamstatic.com/steam/apps/381210/header.jpg" alt="">
+                <img src="https://cdn.cloudflare.steamstatic.com/steam/apps/230410/header.jpg" alt="">
+                <img src="https://cdn.cloudflare.steamstatic.com/steam/apps/346110/header.jpg" alt="">
+                <img src="https://cdn.cloudflare.steamstatic.com/steam/apps/251570/header.jpg" alt="">
+            </div>
+
+            <div class="game-row row-three">
+                <img src="https://cdn.cloudflare.steamstatic.com/steam/apps/107410/header.jpg" alt="">
+                <img src="https://cdn.cloudflare.steamstatic.com/steam/apps/813780/header.jpg" alt="">
+                <img src="https://cdn.cloudflare.steamstatic.com/steam/apps/239140/header.jpg" alt="">
+                <img src="https://cdn.cloudflare.steamstatic.com/steam/apps/1366540/header.jpg" alt="">
+                <img src="https://cdn.cloudflare.steamstatic.com/steam/apps/105600/header.jpg" alt="">
+                <img src="https://cdn.cloudflare.steamstatic.com/steam/apps/236390/header.jpg" alt="">
+            </div>
+
+            <div class="game-row row-four">
+                <img src="https://cdn.cloudflare.steamstatic.com/steam/apps/582010/header.jpg" alt="">
+                <img src="https://cdn.cloudflare.steamstatic.com/steam/apps/238960/header.jpg" alt="">
+                <img src="https://cdn.cloudflare.steamstatic.com/steam/apps/1222670/header.jpg" alt="">
+                <img src="https://cdn.cloudflare.steamstatic.com/steam/apps/359550/header.jpg" alt="">
+                <img src="https://cdn.cloudflare.steamstatic.com/steam/apps/1599340/header.jpg" alt="">
+                <img src="https://cdn.cloudflare.steamstatic.com/steam/apps/431960/header.jpg" alt="">
+            </div>
+        </div>
+
+        <div class="home-collage-overlay"></div>
+
+        <header class="hero-topbar">
+            <div class="logo-section brand-text-only">
+    <div>
+        <h1>Arenix</h1>
+        <span>Gaming Demand Intelligence</span>
+    </div>
+</div>
+
+
+            <nav class="hero-nav" aria-label="Main navigation">
+                <a href="/" class="home-icon-btn" aria-label="Home">
+                    <i class="fa-solid fa-house"></i>
+                </a>
+            </nav>
+        </header>
+
+        <div class="home-center">
+            <h1 class="home-title">
+                Predict, Compare, and Monitor Game Demand
+            </h1>
+
+            <p class="home-subtitle">
+                A machine learning powered dashboard for analyzing live players,
+                predicted demand, and game performance trends.
+            </p>
+
+            <div class="home-buttons">
+                <a href="/dashboard" class="primary-btn no-underline">
+                    Trend Board
+                </a>
+
+                <a href="/compare" class="secondary-btn no-underline">
+                    Compare Games
+                </a>
+            </div>
+        </div>
+    </section>
+</main>
+</body>
+</html>

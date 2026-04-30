@@ -1,0 +1,788 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;800;900&display=swap" rel="stylesheet">
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Arenix | Compare Games</title>
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+<main class="compare-shell">
+    <section class="hero-section compare-hero">
+        <img id="compareHeroBg" class="hero-bg" alt="">
+        <div class="hero-overlay"></div>
+
+        <header class="hero-topbar">
+            <div class="logo-section brand-text-only">
+    <div>
+        <h1>Arenix</h1>
+        <span>Gaming Demand Intelligence</span>
+    </div>
+</div>
+
+            <nav class="hero-nav" aria-label="Main navigation">
+                <a href="/" class="home-icon-btn" aria-label="Home">
+                    <i class="fa-solid fa-house"></i>
+                </a>
+
+                <a href="/dashboard" class="no-underline">
+                    <button class="nav-btn" type="button">Trend Board</button>
+                </a>
+
+                <button class="nav-btn active-nav" type="button">Compare</button>
+            </nav>
+        </header>
+
+        <div class="hero-content">
+            <div class="compare-hero-inner">
+                <h1>Game Comparison Dashboard</h1>
+                <p>Live vs predicted player demand. Make smarter decisions.</p>
+
+                <div class="compare-add-row">
+                    <input
+                        type="text"
+                        id="gameInput"
+                        placeholder="Search games to compare..."
+                        onkeydown="handleCompareEnter(event)"
+                    >
+
+                    <button class="primary-btn" type="button" onclick="addGame()">
+                        <i class="fa-solid fa-plus"></i>
+                        Add Game
+                    </button>
+
+                    <button type="button" onclick="resetGames()" class="clear-btn" id="clearBtn" style="display:none;">
+                        Clear All
+                    </button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="selected-panel">
+        <div class="game-list" id="selectedGames"></div>
+
+        <p id="selectedNote" class="empty-note selected-note">
+            Add games or choose from Trending Now.
+        </p>
+    </section>
+
+    <section class="compare-main-grid">
+        <div class="analytics-card full-width-chart">
+            <div class="analytics-head">
+                <div class="analytics-title">
+                    <div class="mini-icon">
+                        <i class="fa-solid fa-chart-line"></i>
+                    </div>
+
+                    <div>
+                        <h2>Player Activity Trend</h2>
+                        <p>Live and forecasted player counts across selected games</p>
+                    </div>
+                </div>
+
+                <div class="range-pill">Last 7 Days</div>
+            </div>
+
+            <canvas id="compareLineChart"></canvas>
+
+            <p id="chartNote" class="empty-note">
+                No games selected yet.
+            </p>
+        </div>
+
+        <aside class="ai-panel" id="recommendationBox" style="display:none;">
+            <div class="ai-head">
+                <div class="mini-icon">
+                    <i class="fa-solid fa-wand-magic-sparkles"></i>
+                </div>
+
+                <div>
+                    <h2>AI Insights</h2>
+                    <p>Smart analytics at a glance</p>
+                </div>
+            </div>
+
+            <div class="insight-list" id="insightGrid"></div>
+        </aside>
+    </section>
+
+    <section class="trending-panel" id="emptyDashboard">
+        <div class="trending-head panel-head-split">
+            <div>
+                <h2><i class="fa-solid fa-fire"></i> Trending Now</h2>
+                <p>Click any game to add it to comparison</p>
+            </div>
+
+            <div class="top-panel-tools">
+                <input
+                    id="trendingFilter"
+                    class="compact-search"
+                    type="text"
+                    placeholder="Filter games..."
+                    oninput="filterTrendingGames()"
+                >
+                <span id="trendingCount" class="game-count-badge">Loading</span>
+            </div>
+        </div>
+
+        <div class="suggested-grid" id="trendingGames"></div>
+    </section>
+</main>
+
+<script>
+let selectedGames = [];
+let compareLineChart;
+let trendingGames = [];
+
+const gameImages = {
+    "Dota 2": "https://cdn.cloudflare.steamstatic.com/steam/apps/570/header.jpg",
+    "CSGO": "https://cdn.cloudflare.steamstatic.com/steam/apps/730/header.jpg",
+    "Counter Strike: Global Offensive": "https://cdn.cloudflare.steamstatic.com/steam/apps/730/header.jpg",
+    "PUBG": "https://cdn.cloudflare.steamstatic.com/steam/apps/578080/header.jpg",
+    "PUBG: Battlegrounds": "https://cdn.cloudflare.steamstatic.com/steam/apps/578080/header.jpg",
+    "Apex Legends": "https://cdn.cloudflare.steamstatic.com/steam/apps/1172470/header.jpg",
+    "GTA V": "https://cdn.cloudflare.steamstatic.com/steam/apps/271590/header.jpg",
+    "Grand Theft Auto V": "https://cdn.cloudflare.steamstatic.com/steam/apps/271590/header.jpg",
+    "Destiny 2": "https://cdn.cloudflare.steamstatic.com/steam/apps/1085660/header.jpg"
+};
+
+function escapeHtml(value) {
+    return String(value ?? "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+}
+
+function formatGameName(name) {
+    const specialNames = {
+        "dota": "Dota 2",
+        "dota2": "Dota 2",
+        "dota 2": "Dota 2",
+        "cs": "CSGO",
+        "csgo": "CSGO",
+        "cs2": "CSGO",
+        "counter strike": "Counter Strike: Global Offensive",
+        "counter strike global offensive": "Counter Strike: Global Offensive",
+        "counter strike: global offensive": "Counter Strike: Global Offensive",
+        "pubg": "PUBG",
+        "pubg battlegrounds": "PUBG: Battlegrounds",
+        "pubg: battlegrounds": "PUBG: Battlegrounds",
+        "apex": "Apex Legends",
+        "apex legends": "Apex Legends",
+        "gta": "GTA V",
+        "gta v": "GTA V",
+        "gta 5": "GTA V",
+        "grand theft auto v": "Grand Theft Auto V",
+        "destiny2": "Destiny 2",
+        "destiny 2": "Destiny 2"
+    };
+
+    const normalized = String(name || "").toLowerCase().trim();
+
+    if (specialNames[normalized]) {
+        return specialNames[normalized];
+    }
+
+    return normalized
+        .split(" ")
+        .filter(Boolean)
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(" ");
+}
+
+function getGameInitials(name) {
+    return String(name || "Game")
+        .split(" ")
+        .filter(Boolean)
+        .slice(0, 2)
+        .map(word => word.charAt(0).toUpperCase())
+        .join("");
+}
+
+function hashString(value) {
+    let hash = 0;
+    const text = String(value || "game");
+
+    for (let i = 0; i < text.length; i++) {
+        hash = text.charCodeAt(i) + ((hash << 5) - hash);
+    }
+
+    return Math.abs(hash);
+}
+
+function buildFallbackImage(name) {
+    const formattedName = formatGameName(name);
+    const initials = getGameInitials(formattedName);
+    const hash = hashString(formattedName);
+
+    const hueA = hash % 360;
+    const hueB = (hueA + 52) % 360;
+    const hueC = (hueA + 128) % 360;
+
+    const svg = `
+        <svg xmlns="http://www.w3.org/2000/svg" width="460" height="215" viewBox="0 0 460 215">
+            <defs>
+                <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+                    <stop offset="0%" stop-color="hsl(${hueA}, 56%, 28%)"/>
+                    <stop offset="55%" stop-color="hsl(${hueB}, 52%, 22%)"/>
+                    <stop offset="100%" stop-color="hsl(${hueC}, 58%, 24%)"/>
+                </linearGradient>
+            </defs>
+            <rect width="460" height="215" rx="24" fill="url(#bg)"/>
+            <path d="M-20 158 C78 98, 158 208, 246 132 S356 88, 492 48" fill="none" stroke="rgba(255,255,255,.20)" stroke-width="11"/>
+            <path d="M-28 178 C92 128, 154 226, 268 148 S378 116, 500 80" fill="none" stroke="rgba(255,255,255,.10)" stroke-width="7"/>
+            <path d="M330 -30 L502 96 L502 -30 Z" fill="rgba(255,255,255,.10)"/>
+            <path d="M-40 82 L144 236 L-40 236 Z" fill="rgba(0,0,0,.14)"/>
+            <text x="50%" y="53%" dominant-baseline="middle" text-anchor="middle"
+                font-family="Arial, sans-serif" font-size="64" font-weight="900"
+                fill="white" letter-spacing="3">${initials}</text>
+        </svg>
+    `;
+
+    return "data:image/svg+xml;charset=UTF-8," + encodeURIComponent(svg);
+}
+
+const defaultHeroImage = buildFallbackImage("Arenix Compare");
+
+function normalizeGameListing(game) {
+    if (typeof game === "object" && game !== null) {
+        const rawName = game.display_name || game.name || game.matched_game || game.game || game.key;
+        return {
+            key: game.key || game.searched_game || rawName,
+            name: formatGameName(rawName),
+            image: game.image_url || game.image || getGameImage(rawName)
+        };
+    }
+
+    return {
+        key: game,
+        name: formatGameName(game),
+        image: getGameImage(game)
+    };
+}
+
+function getGameImage(game) {
+    if (typeof game === "object" && game !== null && game.image_url) {
+        return game.image_url;
+    }
+
+    const name = typeof game === "object" && game !== null
+        ? game.display_name || game.matched_game || game.game || game.name || game.key
+        : game;
+
+    const formattedName = formatGameName(name);
+    return gameImages[formattedName] || buildFallbackImage(formattedName);
+}
+
+function setImageFallback(img, name) {
+    img.onerror = () => {
+        img.onerror = null;
+        img.src = buildFallbackImage(name);
+    };
+}
+
+async function renderTrendingGames() {
+    const box = document.getElementById("trendingGames");
+    box.innerHTML = "";
+
+    try {
+        const response = await fetch("/recommended-games");
+        const games = await response.json();
+
+        trendingGames = games.map(normalizeGameListing);
+        renderTrendingList(trendingGames);
+    } catch (error) {
+        console.error("Recommended games loading error:", error);
+        box.innerHTML = `<p class="empty-note">Could not load games.</p>`;
+        document.getElementById("trendingCount").innerText = "0 games";
+    }
+}
+
+function renderTrendingList(games) {
+    const box = document.getElementById("trendingGames");
+    const count = document.getElementById("trendingCount");
+
+    box.innerHTML = "";
+    count.innerText = `${games.length} games`;
+
+    if (games.length === 0) {
+        box.innerHTML = `<p class="empty-note">No matching games found.</p>`;
+        return;
+    }
+
+    games.forEach(game => {
+        const card = document.createElement("article");
+        card.className = "suggest-card";
+        card.addEventListener("click", () => quickAdd(game.key));
+
+        card.innerHTML = `
+            <img src="${game.image}" class="suggest-thumb" alt="">
+            <h3>${escapeHtml(game.name)}</h3>
+        `;
+
+        setImageFallback(card.querySelector("img"), game.name);
+        box.appendChild(card);
+    });
+}
+
+function filterTrendingGames() {
+    const query = document.getElementById("trendingFilter").value.toLowerCase().trim();
+
+    const filteredGames = trendingGames.filter(game =>
+        game.name.toLowerCase().includes(query)
+    );
+
+    renderTrendingList(filteredGames);
+}
+
+function formatNumber(num) {
+    return Number(num || 0).toLocaleString();
+}
+
+function shortNumber(num) {
+    num = Number(num || 0);
+
+    if (num >= 1000000) return (num / 1000000).toFixed(1) + "M";
+    if (num >= 1000) return Math.round(num / 1000) + "k";
+
+    return num;
+}
+
+function calculateGain(live, predicted) {
+    live = Number(live || 0);
+    predicted = Number(predicted || 0);
+
+    if (live === 0) return 0;
+
+    return ((predicted - live) / live) * 100;
+}
+
+function gainClass(value) {
+    return value >= 0 ? "gain-positive" : "gain-negative";
+}
+
+function gainText(value) {
+    return value >= 0
+        ? "↑ +" + value.toFixed(1) + "%"
+        : "↓ " + Math.abs(value).toFixed(1) + "%";
+}
+
+function scoreText(value) {
+    return `${Number(value || 0)}/100`;
+}
+
+function handleCompareEnter(event) {
+    if (event.key === "Enter") addGame();
+}
+
+function formatShortDate(value) {
+    if (!value) return "Forecast";
+
+    return new Date(value).toLocaleDateString("en-US", {
+        month: "short",
+        year: "2-digit"
+    });
+}
+
+function getTrendLabels(results) {
+    const longestHistory = results
+        .map(game => Array.isArray(game.history) ? game.history : [])
+        .sort((a, b) => b.length - a.length)[0] || [];
+
+    return [
+        ...longestHistory.map(row => formatShortDate(row.date)),
+        "Forecast"
+    ];
+}
+
+function buildPlayerSeries(game, labelCount) {
+    const history = Array.isArray(game.history) ? game.history : [];
+    const values = history.map(row => Number(row.players || 0));
+
+    while (values.length < labelCount - 1) {
+        values.unshift(null);
+    }
+
+    values.push(Number(game.predicted_players || 0));
+    return values;
+}
+
+function colorSet(index, gain) {
+    const positive = gain >= 0;
+
+    const sets = [
+        {
+            live: positive ? "#6ee76e" : "#ff5f5f",
+            pred: positive ? "rgba(110,231,110,.85)" : "rgba(255,95,95,.85)",
+            fill: positive ? "rgba(110,231,110,.12)" : "rgba(255,95,95,.12)"
+        },
+        {
+            live: "#4f8dff",
+            pred: "rgba(79,141,255,.85)",
+            fill: "rgba(79,141,255,.12)"
+        },
+        {
+            live: "#ff4f6d",
+            pred: "rgba(255,79,109,.85)",
+            fill: "rgba(255,79,109,.12)"
+        }
+    ];
+
+    return sets[index % sets.length];
+}
+
+async function fetchGame(game) {
+    const response = await fetch(`/predict/${encodeURIComponent(game)}`);
+    const data = await response.json();
+
+    if (data.error) return null;
+
+    return data;
+}
+
+function updateCompareHero(results) {
+    if (results.length === 0) {
+        document.getElementById("compareHeroBg").src = defaultHeroImage;
+        return;
+    }
+
+    const topGame = results.reduce((a, b) =>
+        (a.current_players || 0) > (b.current_players || 0) ? a : b
+    );
+
+    document.getElementById("compareHeroBg").src = getGameImage(topGame);
+}
+
+async function drawComparison() {
+    const results = [];
+
+    for (const game of selectedGames) {
+        const data = await fetchGame(game);
+        if (data) results.push(data);
+    }
+
+    renderGameRows(results);
+    renderInsights(results);
+    updateCompareHero(results);
+
+    document.getElementById("clearBtn").style.display =
+        results.length > 0 ? "inline-flex" : "none";
+
+    document.getElementById("selectedNote").style.display =
+        results.length > 0 ? "none" : "block";
+
+    const chartCanvas = document.getElementById("compareLineChart");
+    const analyticsCard = document.querySelector(".analytics-card");
+
+    if (compareLineChart) compareLineChart.destroy();
+
+    if (results.length === 0) {
+        chartCanvas.style.display = "none";
+        document.getElementById("chartNote").innerText = "No games selected yet.";
+        document.getElementById("recommendationBox").style.display = "none";
+        analyticsCard.classList.add("full-width-chart");
+        return;
+    }
+
+    chartCanvas.style.display = "block";
+    document.getElementById("recommendationBox").style.display = "block";
+    analyticsCard.classList.remove("full-width-chart");
+    document.getElementById("chartNote").innerText =
+        "Hover over the chart to inspect live and predicted values.";
+
+    const labels = getTrendLabels(results);
+    const datasets = [];
+
+    results.forEach((game, index) => {
+        const gameName = formatGameName(game.display_name || game.matched_game || game.game);
+        const gain = calculateGain(game.current_players, game.predicted_players);
+        const colors = colorSet(index, gain);
+
+        datasets.push({
+            label: gameName + " history + forecast",
+            data: buildPlayerSeries(game, labels.length),
+            borderColor: colors.live,
+            backgroundColor: colors.fill,
+            borderWidth: 2,
+            tension: 0.38,
+            pointRadius: 3,
+            pointHoverRadius: 4,
+            fill: true
+        });
+    });
+
+    compareLineChart = new Chart(chartCanvas, {
+        type: "line",
+        data: { labels, datasets },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: { mode: "index", intersect: false },
+            plugins: {
+                legend: {
+                    position: "bottom",
+                    labels: {
+                        color: "#cfd6e6",
+                        font: { size: 10 },
+                        boxWidth: 12,
+                        boxHeight: 3,
+                        padding: 8,
+                        usePointStyle: true,
+                        pointStyle: "line"
+                    }
+                },
+                tooltip: {
+                    backgroundColor: "rgba(8,12,20,.97)",
+                    borderColor: "rgba(126,200,227,.22)",
+                    borderWidth: 1,
+                    padding: 12,
+                    titleColor: "#ffffff",
+                    bodyColor: "#d8d8d8",
+                    displayColors: true,
+                    callbacks: {
+                        title: ctx => "Date: " + ctx[0].label,
+                        label: ctx =>
+                            ctx.dataset.label + ": " + formatNumber(ctx.raw) + " players"
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    ticks: { color: "#aeb6c8", font: { size: 12 } },
+                    grid: { color: "rgba(255,255,255,.04)" }
+                },
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        color: "#aeb6c8",
+                        font: { size: 11 },
+                        callback: value => shortNumber(value)
+                    },
+                    grid: { color: "rgba(255,255,255,.055)" }
+                }
+            }
+        }
+    });
+}
+
+function renderGameRows(results) {
+    const box = document.getElementById("selectedGames");
+    box.innerHTML = "";
+
+    results.forEach((game, index) => {
+        const live = Number(game.current_players || 0);
+        const predicted = Number(game.predicted_players || 0);
+        const gain = calculateGain(live, predicted);
+        const gameName = formatGameName(game.display_name || game.matched_game || game.game);
+        const image = getGameImage(game);
+
+        const row = document.createElement("div");
+        row.className = "game-row";
+
+        row.innerHTML = `
+            <div class="drag-dot">
+                <i class="fa-solid fa-grip-lines"></i>
+            </div>
+
+            <div>
+                <img src="${image}" class="compare-row-thumb" alt="">
+            </div>
+
+            <div class="game-name">
+                ${escapeHtml(gameName)}
+            </div>
+
+            <div class="row-metric">
+                <small>Current Players</small>
+                <strong class="gain-positive">${formatNumber(live)}</strong>
+            </div>
+
+            <div class="row-metric">
+                <small>Predicted Players</small>
+                <strong class="blue">${formatNumber(predicted)}</strong>
+            </div>
+
+            <div class="row-metric">
+                <small>Gain</small>
+                <strong class="${gainClass(gain)}">${gainText(gain)}</strong>
+            </div>
+
+            <button class="remove" type="button" onclick="removeGame(${index})" aria-label="Remove ${escapeHtml(gameName)}">
+                &times;
+            </button>
+        `;
+
+        setImageFallback(row.querySelector("img"), gameName);
+        box.appendChild(row);
+    });
+}
+
+function renderInsights(results) {
+    const grid = document.getElementById("insightGrid");
+
+    if (results.length === 0) {
+        grid.innerHTML = "";
+        return;
+    }
+
+    const highestLive = results.reduce((a, b) =>
+        (a.current_players || 0) > (b.current_players || 0) ? a : b
+    );
+
+    const highestPredicted = results.reduce((a, b) =>
+        (a.predicted_players || 0) > (b.predicted_players || 0) ? a : b
+    );
+
+    const fastestGrowth = results.reduce((a, b) =>
+        Number(a.gain_percent || calculateGain(a.current_players, a.predicted_players)) >
+        Number(b.gain_percent || calculateGain(b.current_players, b.predicted_players)) ? a : b
+    );
+
+    const highestRisk = results.reduce((a, b) =>
+        Number(a.server_risk_score || 0) > Number(b.server_risk_score || 0) ? a : b
+    );
+
+    const bestOpportunity = results.reduce((a, b) =>
+        Number(a.opportunity_score || 0) > Number(b.opportunity_score || 0) ? a : b
+    );
+
+    const avgGain =
+        results.reduce((sum, game) => {
+            return sum + calculateGain(game.current_players, game.predicted_players);
+        }, 0) / results.length;
+
+    const highestLiveName = formatGameName(highestLive.display_name || highestLive.matched_game || highestLive.game);
+    const highestPredictedName = formatGameName(highestPredicted.display_name || highestPredicted.matched_game || highestPredicted.game);
+    const fastestGrowthName = formatGameName(fastestGrowth.display_name || fastestGrowth.matched_game || fastestGrowth.game);
+    const highestRiskName = formatGameName(highestRisk.display_name || highestRisk.matched_game || highestRisk.game);
+    const bestOpportunityName = formatGameName(bestOpportunity.display_name || bestOpportunity.matched_game || bestOpportunity.game);
+    const winnerName = formatGameName(highestPredicted.display_name || highestPredicted.matched_game || highestPredicted.game);
+    const fastestGrowthValue = Number(fastestGrowth.gain_percent || calculateGain(fastestGrowth.current_players, fastestGrowth.predicted_players));
+
+    grid.innerHTML = `
+        <div class="ai-insight">
+            <div class="ai-icon ai-green"><i class="fa-solid fa-users"></i></div>
+            <div>
+                <b class="gain-positive">Highest Current Demand</b>
+                <span>${escapeHtml(highestLiveName)}</span>
+            </div>
+            <div class="ai-value gain-positive">
+                ${formatNumber(highestLive.current_players)}
+                <span class="ai-status-text">players</span>
+            </div>
+        </div>
+
+        <div class="ai-insight">
+            <div class="ai-icon ai-purple"><i class="fa-solid fa-chart-simple"></i></div>
+            <div>
+                <b class="purple">Highest ML Forecast</b>
+                <span>${escapeHtml(highestPredictedName)}</span>
+            </div>
+            <div class="ai-value purple">
+                ${formatNumber(highestPredicted.predicted_players)}
+                <span class="ai-status-text">predicted</span>
+            </div>
+        </div>
+
+        <div class="ai-insight">
+            <div class="ai-icon ai-blue"><i class="fa-solid fa-server"></i></div>
+            <div>
+                <b class="blue">Highest Server Risk</b>
+                <span>${escapeHtml(highestRiskName)}</span>
+            </div>
+            <div class="ai-value blue">
+                ${scoreText(highestRisk.server_risk_score)}
+                <span class="ai-status-text">risk score</span>
+            </div>
+        </div>
+
+        <div class="ai-insight">
+            <div class="ai-icon ai-orange"><i class="fa-solid fa-bullhorn"></i></div>
+            <div>
+                <b class="orange">Best Promotion Target</b>
+                <span>${escapeHtml(bestOpportunityName)}</span>
+            </div>
+            <div class="ai-value orange">
+                ${scoreText(bestOpportunity.opportunity_score)}
+                <span class="ai-status-text">opportunity</span>
+            </div>
+        </div>
+
+        <div class="ai-insight">
+            <div class="ai-icon ai-blue"><i class="fa-solid fa-clock"></i></div>
+            <div>
+                <b class="blue">Fastest Growth</b>
+                <span>${escapeHtml(fastestGrowthName)}</span>
+            </div>
+            <div class="ai-value ${gainClass(fastestGrowthValue)}">
+                ${gainText(fastestGrowthValue)}
+                <span class="ai-status-text">forecast gain</span>
+            </div>
+        </div>
+
+        <div class="ai-insight">
+            <div class="ai-icon ai-pink"><i class="fa-solid fa-arrow-trend-up"></i></div>
+            <div>
+                <b class="pink">Comparison Winner</b>
+                <span>${escapeHtml(winnerName)} has the strongest forecast.</span>
+            </div>
+            <div class="ai-value ${gainClass(avgGain)}">
+                ${avgGain >= 0 ? "Rising" : "Mixed"}
+                <span class="ai-status-text">overall trend</span>
+            </div>
+        </div>
+    `;
+}
+
+function addGame() {
+    const input = document.getElementById("gameInput").value.trim();
+
+    if (!input) return;
+
+    input.split(",").forEach(game => {
+        game = game.trim();
+
+        if (game && !selectedGames.includes(game)) {
+            selectedGames.push(game);
+        }
+    });
+
+    document.getElementById("gameInput").value = "";
+    drawComparison();
+}
+
+function quickAdd(game) {
+    if (!selectedGames.includes(game)) {
+        selectedGames.push(game);
+        drawComparison();
+    }
+}
+
+function removeGame(index) {
+    selectedGames.splice(index, 1);
+    drawComparison();
+}
+
+function resetGames() {
+    selectedGames = [];
+    drawComparison();
+}
+
+document.getElementById("compareHeroBg").src = defaultHeroImage;
+
+renderTrendingGames();
+drawComparison();
+</script>
+</body>
+</html>

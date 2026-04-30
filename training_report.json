@@ -1,0 +1,63 @@
+{
+  "generated_at": "2026-04-29T21:03:51+00:00",
+  "model_version": "final_demand_model",
+  "selected_model": "lag_1_baseline",
+  "model_type": "LagBaselineRegressor",
+  "model_params": {},
+  "data": {
+    "path": "model_data.csv",
+    "sha256": "8cf82537258fd8590cf786411ad16f67f920b8f40b8227e28a754c6c7d94c0f4",
+    "rows": 3736,
+    "train_rows": 2984,
+    "test_rows": 752,
+    "date_min": "2016-08-01",
+    "date_max": "2021-09-01",
+    "target": "players",
+    "target_sources": [
+      "historical_monthly_activity"
+    ]
+  },
+  "feature_schema": {
+    "features": [
+      "year",
+      "month",
+      "event_flag",
+      "game_encoded",
+      "lag_1",
+      "lag_7",
+      "rolling_7"
+    ],
+    "target": "players",
+    "ignored_columns": [
+      "peak_players",
+      "date",
+      "game",
+      "viewer_count"
+    ]
+  },
+  "validation": {
+    "split": "time_based",
+    "test_start": "2021-01-01",
+    "model_metrics": {
+      "mae": 3727.608736702128,
+      "mape": 0.15014735193463333,
+      "r2": 0.9894832511751323
+    },
+    "candidate_metrics": {
+      "xgboost": {
+        "mae": 5961.610013518639,
+        "mape": 0.16728119736225647,
+        "r2": 0.9364418993824585
+      },
+      "lag_1_baseline": {
+        "mae": 3727.608736702128,
+        "mape": 0.15014735193463333,
+        "r2": 0.9894832511751323
+      }
+    },
+    "selection_metric": "mae"
+  },
+  "artifacts": {
+    "model_path": "model/final_demand_model.pkl"
+  }
+}

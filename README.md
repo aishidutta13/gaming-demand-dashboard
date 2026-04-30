@@ -1,91 +1,185 @@
-# Arenix: Gaming Demand Intelligence
 
-Arenix is a Flask dashboard that forecasts next-month player demand for Steam games using historical player activity and a validation-selected demand model. The app combines model predictions with live Steam player counts, game artwork, search, a demand leaderboard, and game-to-game comparison views.
+# Arenix: AI Realtime Gaming Analytics
 
-## What It Does
+Arenix is a Flask-based machine learning dashboard that forecasts Steam game demand using historical player activity, model evaluation, and live Steam API context.
 
-- Forecasts the next monthly player count for supported games.
-- Reports whether each forecast came from XGBoost, the selected lag baseline, or the runtime fallback baseline.
-- Shows the latest observed historical player count and live Steam player count when available.
-- Classifies demand as low, medium, or high.
-- Compares multiple games using real historical series plus the next forecast point.
-- Uses Steam artwork and live-player APIs for product-style dashboard polish.
+The project is built as an end-to-end analytics product: it includes data processing, model training, prediction APIs, an interactive dashboard, game comparison views, deployment configuration, and regression tests.
+
+## Screenshots
+
+![Gaming Demand Dashboard](gaming_dashboard_updated.png)
+
+![ML Evaluation Dashboard](ml_evaluation_dashboard.png)
+
+## Project Highlights
+
+- Forecasts next-period player demand for supported Steam games.
+- Uses historical monthly player activity for demand prediction.
+- Compares XGBoost against a lag-based baseline model.
+- Selects the best model using time-based validation.
+- Displays live Steam player counts when available.
+- Includes demand levels, trend labels, server risk, opportunity score, and business recommendations.
+- Provides dashboard, search, leaderboard, and game comparison views.
+- Handles unsupported games with clear error responses.
+- Includes deployment files for Render/Gunicorn.
+- Includes pytest-based regression tests.
+
+## Tech Stack
+
+- Python
+- Flask
+- Pandas
+- Scikit-learn
+- XGBoost
+- Requests
+- HTML
+- CSS
+- JavaScript
+- Chart.js
+- Pytest
+- Gunicorn
 
 ## Dataset
 
 The included dataset is `model_data.csv`.
 
 - Historical range: `2016-08-01` to `2021-09-01`
-- Granularity: monthly
-- Target: `players`
-- Model features: `year`, `month`, `event_flag`, `game_encoded`, `lag_1`, `lag_7`, `rolling_7`
+- Granularity: Monthly
+- Target column: `players`
+- Main features: `year`, `month`, `event_flag`, `game_encoded`, `lag_1`, `lag_7`, `rolling_7`
 
-Because the bundled data ends in September 2021, forecasts are next-period forecasts from the latest available historical row, not claims about the current real-world month. Live Steam player counts are displayed separately as product context.
+Because the bundled historical data ends in September 2021, the model forecasts the next period after the latest available historical row. Live Steam player counts are displayed separately as real-time context.
 
-When `data/model_data_updated.csv` exists, the Flask app uses it automatically so inference rows stay aligned with the latest retrained model. You can override this with `ARENIX_DATA_PATH=/path/to/data.csv`.
+## Model Approach
+
+The training pipeline compares XGBoost Regressor with a Lag-1 baseline model.
+
+The model is selected using a time-based validation split, which is more realistic for forecasting than random splitting because future data is not mixed into training data.
+
+The training report is saved in `model/training_report.json`.
+
+The selected trained model is saved in `model/final_demand_model.pkl`.
+
+## Main Features
+
+### Demand Forecasting
+
+The app predicts the next-period player count for supported games and returns predicted players, demand level, forecast date, model source, confidence level, trend direction, and recommendation.
+
+### Live Steam Context
+
+The app uses the Steam API to show live player counts when available. If the live API fails or is unavailable, the app falls back to the latest historical player count.
+
+### Dashboard
+
+The dashboard shows tracked games, top forecast, high-demand games, game rankings, demand filters, and selected game details.
+
+### Game Comparison
+
+The comparison page allows multiple games to be compared using historical data and forecasted demand.
+
+### Daily Retraining Pipeline
+
+The project includes scripts to collect Steam snapshots, build updated training data, and retrain the model.
+
+Pipeline flow:
+
+```text
+Collect Steam player snapshots
+        ↓
+Save daily snapshot data
+        ↓
+Build updated model-ready data
+        ↓
+Retrain the demand model
+        ↓
+Save updated model and training report
+```
+
+## Project Structure
+
+```text
+app.py                         Flask routes, APIs, prediction logic
+train_model.py                 Model training and validation
+demand_model.py                Baseline demand model
+game_catalog.py                Supported game names and Steam app IDs
+collect_steam_snapshots.py     Collects live Steam player snapshots
+build_live_training_data.py    Builds model-ready data from snapshots
+run_daily_pipeline.py          Runs the full daily pipeline
+validate_model_report.py       Validates model selection report
+model_data.csv                 Historical training dataset
+model/                         Saved model and training report
+templates/                     HTML pages
+static/                        CSS styling
+tests/                         Regression tests
+requirements.txt               Python dependencies
+Procfile                       Deployment process file
+render.yaml                    Render deployment configuration
+runtime.txt                    Python runtime version
+```
 
 ## Setup
+
+Clone the repository:
+
+```bash
+git clone https://github.com/aishidutta13/AI-realtime-gaming-analytics.git
+cd AI-realtime-gaming-analytics
+```
+
+Create and activate a virtual environment:
 
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
+```
+
+Install dependencies:
+
+```bash
 pip install -r requirements.txt
 ```
 
-On macOS, XGBoost may also require the OpenMP runtime:
+On macOS, XGBoost may require OpenMP:
 
 ```bash
 brew install libomp
 ```
 
-If XGBoost cannot load because the native OpenMP runtime is missing, the Flask app remains usable by falling back to a transparent lag-and-rolling-average baseline. API responses include `model_source` and `model_warning` so this is visible instead of hidden.
-
-## Run
+## Run the App
 
 ```bash
 python app.py
 ```
 
-Open `http://127.0.0.1:5002`.
+Open:
 
-## Test
+```text
+http://127.0.0.1:5002
+```
+
+## Run Tests
 
 ```bash
 pytest
 ```
 
-## Train
+## Train the Model
 
 ```bash
 python train_model.py
 ```
 
-The training script uses a time-based validation split so later months are evaluated as future data instead of randomly mixed with older records. It evaluates XGBoost against a lag-1 baseline and saves the candidate with the lowest validation MAE. It also writes `model/training_report.json` with selected-model metadata, candidate metrics, feature schema, data hash, date range, and target-source metadata.
+To train using updated live snapshot data:
 
-## Daily Steam Retraining Pipeline
+```bash
+python train_model.py --data data/model_data_updated.csv
+```
 
-Steam's player-count API gives the number of players online at the moment it is called. The project now stores those daily snapshots first, then turns them into model-ready rows before retraining.
-
-To avoid treating a single live count as a full monthly target, `build_live_training_data.py` only creates a game-month row after at least 7 snapshots are available for that game and month. Generated rows include `target_source=steam_current_players_monthly_mean` and `snapshot_count` so the live-data target definition is explicit.
-
-Run the full pipeline:
+## Run Daily Pipeline
 
 ```bash
 python run_daily_pipeline.py
-```
-
-What it does:
-
-```text
-Steam API gives a fresh player-count snapshot
-        ↓
-Save it in data/steam_player_snapshots.csv
-        ↓
-Build data/model_data_updated.csv
-        ↓
-Retrain model/final_demand_model.pkl
-        ↓
-Deploy platform can pick up the new committed model
 ```
 
 Useful commands:
@@ -93,33 +187,50 @@ Useful commands:
 ```bash
 python collect_steam_snapshots.py
 python build_live_training_data.py
-python train_model.py --data data/model_data_updated.csv
-python train_model.py --data data/model_data_updated.csv --metrics model/training_report.json
 python run_daily_pipeline.py --skip-collect
 ```
 
-The GitHub Actions workflow in `.github/workflows/daily-retrain.yml` can run this every day after you push the project to GitHub. If your deployment service is connected to the GitHub repo, the new committed model can trigger a redeploy automatically.
-
-## Project Structure
+## API Routes
 
 ```text
-app.py                         Flask API and web routes
-train_model.py                 Model training, comparison, and time-based evaluation
-demand_model.py                Serializable baseline model used when it wins validation
-run_daily_pipeline.py          Daily collect-build-train workflow
-collect_steam_snapshots.py     Steam live-player snapshot collector
-build_live_training_data.py    Converts snapshots into model-ready data
-game_catalog.py                Shared game names and Steam app ids
-data/                          Generated Steam snapshots and updated training data
-model_data.csv                 Historical game demand dataset
-model/final_demand_model.pkl   Selected trained demand model artifact
-model/training_report.json     Saved training metrics and model/data metadata
-templates/                     Dashboard pages
-static/style.css               App styling
-tests/                         Regression tests
+/                         Home page
+/dashboard                Dashboard page
+/compare                  Game comparison page
+/predict/<game>           Prediction API for a game
+/dashboard-data           Dashboard ranking data
+/compare-games/<games>    Compare multiple games
+/recommended-games        Supported game list
 ```
+
+## Example Use Cases
+
+- Gaming demand forecasting
+- Player activity trend monitoring
+- Game performance comparison
+- Server capacity planning
+- Promotion opportunity analysis
+- ML model evaluation practice
 
 ## Current Limitations
 
-- Unsupported games return a clear error instead of fabricated predictions.
-- Steam API calls can fail or be rate-limited, so the app falls back to the latest historical player count when live data is unavailable.
+- The bundled historical dataset ends in September 2021.
+- Forecasts are based on the latest available historical row, not the current real-world month.
+- Live Steam player counts are used as context, not as the original historical training target.
+- Steam API calls may fail or be rate-limited.
+- Unsupported games return an error instead of fabricated predictions.
+
+## Future Improvements
+
+- Deploy the dashboard publicly.
+- Add more current historical data.
+- Add authentication for admin model retraining.
+- Add downloadable reports.
+- Improve frontend responsiveness.
+- Add more advanced time-series models.
+
+## Author
+
+Aishi Dutta
+
+GitHub: [aishidutta13](https://github.com/aishidutta13)
+```

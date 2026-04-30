@@ -1,4 +1,4 @@
-```md
+
 # Arenix: AI Realtime Gaming Analytics
 
 Arenix is a Flask-based machine learning dashboard for forecasting Steam game demand using historical player activity, model evaluation, live Steam API context, and interactive dashboard views.
